@@ -1,0 +1,7 @@
+/*
+ * 디자인 토큰 (skills/frontend/SKILL.md 절대 규칙 1)
+ * 색·폰트·간격은 이 파일과 Tailwind config 의 토큰만 사용. 임의 hex 금지.
+ * TODO: packages/design-tokens/tokens/*.json 원본에서 생성
+ */
+:root {
+}
