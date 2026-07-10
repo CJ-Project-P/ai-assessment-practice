@@ -6,13 +6,17 @@ import { ko } from '@/i18n'
 
 export default function Login() {
   const navigate = useNavigate()
-  const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    const result = logIn(username, password)
+    setError(null)
+    setSubmitting(true)
+    const result = await logIn(email, password)
+    setSubmitting(false)
     if (!result.ok) {
       setError(result.error)
       return
@@ -25,11 +29,11 @@ export default function Login() {
       <h1 className="text-4xl font-bold text-foreground">{ko.login.title}</h1>
       <form onSubmit={handleSubmit} className="flex w-full max-w-md flex-col gap-5">
         <input
-          type="text"
-          placeholder={ko.login.idPlaceholder}
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          autoComplete="username"
+          type="email"
+          placeholder={ko.login.emailPlaceholder}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          autoComplete="email"
           className="rounded-xl border border-border bg-card px-5 py-4 text-lg text-foreground focus:border-primary focus:outline-none"
         />
         <input
@@ -41,8 +45,8 @@ export default function Login() {
           className="rounded-xl border border-border bg-card px-5 py-4 text-lg text-foreground focus:border-primary focus:outline-none"
         />
         {error && <p className="text-base text-destructive">{error}</p>}
-        <Button type="submit" className="mt-2 px-8 py-4 text-lg">
-          {ko.login.submit}
+        <Button type="submit" disabled={submitting} className="mt-2 px-8 py-4 text-lg">
+          {submitting ? ko.login.submitting : ko.login.submit}
         </Button>
       </form>
       <p className="text-base text-muted-foreground">

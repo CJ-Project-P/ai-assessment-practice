@@ -6,18 +6,38 @@ import { ko } from '@/i18n'
 
 export default function Signup() {
   const navigate = useNavigate()
-  const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+  const [confirmationSent, setConfirmationSent] = useState(false)
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    const result = signUp(username, password)
+    setError(null)
+    setSubmitting(true)
+    const result = await signUp(email, password)
+    setSubmitting(false)
     if (!result.ok) {
       setError(result.error)
       return
     }
+    if (result.needsEmailConfirmation) {
+      setConfirmationSent(true)
+      return
+    }
     navigate('/')
+  }
+
+  if (confirmationSent) {
+    return (
+      <div className="flex min-h-dvh flex-col items-center justify-center gap-6 bg-background px-6 py-20 text-center">
+        <h1 className="text-3xl font-bold text-foreground">{ko.auth.needsEmailConfirmation}</h1>
+        <Link to="/login" className="text-base text-primary hover:underline">
+          {ko.signup.loginLink}
+        </Link>
+      </div>
+    )
   }
 
   return (
@@ -25,11 +45,11 @@ export default function Signup() {
       <h1 className="text-4xl font-bold text-foreground">{ko.signup.title}</h1>
       <form onSubmit={handleSubmit} className="flex w-full max-w-md flex-col gap-5">
         <input
-          type="text"
-          placeholder={ko.signup.idPlaceholder}
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          autoComplete="username"
+          type="email"
+          placeholder={ko.signup.emailPlaceholder}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          autoComplete="email"
           className="rounded-xl border border-border bg-card px-5 py-4 text-lg text-foreground focus:border-primary focus:outline-none"
         />
         <input
@@ -41,8 +61,8 @@ export default function Signup() {
           className="rounded-xl border border-border bg-card px-5 py-4 text-lg text-foreground focus:border-primary focus:outline-none"
         />
         {error && <p className="text-base text-destructive">{error}</p>}
-        <Button type="submit" className="mt-2 px-8 py-4 text-lg">
-          {ko.signup.submit}
+        <Button type="submit" disabled={submitting} className="mt-2 px-8 py-4 text-lg">
+          {submitting ? ko.signup.submitting : ko.signup.submit}
         </Button>
       </form>
       <p className="text-base text-muted-foreground">
