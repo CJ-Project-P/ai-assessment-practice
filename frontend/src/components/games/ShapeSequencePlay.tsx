@@ -189,7 +189,7 @@ export function ShapeSequencePlay({ mode, round1Count: round1CountProp, round2Co
       const threeBack = history.length >= 3 ? history[history.length - 3] : null
       const mistake: SequenceMistake = { shape: currentShape, twoBack, threeBack, correctAnswer, selectedAnswer: answer }
       setSequenceMistakes((prev) => [...prev, mistake])
-      addWrongAnswer('shape-sequence', mode, mistake)
+      addWrongAnswer('shape-sequence', mode, mistake).catch(console.error)
     }
     if (mode === 'learn') {
       setResult(correct ? 'correct' : 'incorrect')
@@ -218,7 +218,7 @@ export function ShapeSequencePlay({ mode, round1Count: round1CountProp, round2Co
         showNextJudgeShape(2, history)
       } else {
         if (mode === 'practice') {
-          addPracticeRecord('shape-sequence', newSolvedCount, newSolvedCount - mistakes.length)
+          addPracticeRecord('shape-sequence', newSolvedCount, newSolvedCount - mistakes.length).catch(console.error)
         }
         setFinished(true)
       }

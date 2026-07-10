@@ -125,7 +125,7 @@ export function PotionPlay({ mode, totalCount, onFinish }: PotionPlayProps) {
     }
     if (nextSolved >= target) {
       if (mode === 'practice') {
-        addPracticeRecord('potion', nextSolved, correctCount)
+        addPracticeRecord('potion', nextSolved, correctCount).catch(console.error)
       }
       setFinished(true)
       return

@@ -1,7 +1,8 @@
+import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { PageContainer } from '@/components/ui/PageContainer'
 import { cn } from '@/lib/utils'
-import { getCurrentUsername } from '@/lib/auth'
+import { onAuthStateChange, type AuthUser } from '@/lib/auth'
 import { getPracticeRecords, type PracticeRecord } from '@/lib/practiceRecords'
 import { games } from '@/lib/games'
 import { ko } from '@/i18n'
@@ -92,12 +93,19 @@ function GameRecordSection({ gameId, gameName, records }: { gameId: string; game
 }
 
 export default function MyRecords() {
-  const username = getCurrentUsername()
+  const [user, setUser] = useState<AuthUser | null>(null)
+  const [allRecords, setAllRecords] = useState<PracticeRecord[]>([])
   const [searchParams, setSearchParams] = useSearchParams()
   const selectedGameId = searchParams.get('game')
 
+  useEffect(() => onAuthStateChange(setUser), [])
+
+  useEffect(() => {
+    getPracticeRecords().then(setAllRecords)
+  }, [])
+
   const allSections = games
-    .map((game) => ({ game, records: getPracticeRecords(game.id) }))
+    .map((game) => ({ game, records: allRecords.filter((r) => r.gameId === game.id) }))
     .filter((s) => s.records.length > 0)
   const sections = selectedGameId ? allSections.filter((s) => s.game.id === selectedGameId) : allSections
 
@@ -114,7 +122,7 @@ export default function MyRecords() {
       <div className="mb-10 flex items-center justify-between">
         <div>
           <h1 className="text-4xl font-bold text-foreground">{ko.myRecords.title}</h1>
-          <p className="mt-2 text-base text-muted-foreground">{ko.myRecords.subtitle(username)}</p>
+          <p className="mt-2 text-base text-muted-foreground">{ko.myRecords.subtitle(user?.email ?? null)}</p>
         </div>
         <Link to="/games" className="text-base text-primary hover:underline">
           {ko.myRecords.backToGames}

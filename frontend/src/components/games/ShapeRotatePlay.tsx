@@ -101,7 +101,7 @@ export function ShapeRotatePlay({ mode, round1Sec: round1SecProp, round2Sec: rou
         setResult(null)
       } else {
         if (mode === 'practice') {
-          addPracticeRecord('shape-rotate', solvedCount, solvedCount - mistakes.length)
+          addPracticeRecord('shape-rotate', solvedCount, solvedCount - mistakes.length).catch(console.error)
         }
         setFinished(true)
       }
@@ -154,7 +154,7 @@ export function ShapeRotatePlay({ mode, round1Sec: round1SecProp, round2Sec: rou
         userOps: history,
       }
       setMistakes((prev) => [...prev, mistake])
-      addWrongAnswer('shape-rotate', mode, mistake)
+      addWrongAnswer('shape-rotate', mode, mistake).catch(console.error)
     }
 
     if (mode === 'practice') {

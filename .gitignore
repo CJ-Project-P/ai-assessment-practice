@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 
+# 환경 변수 (Supabase 키 등 비밀값)
+.env
+.env.*
+!.env.example
+
 # Python
 .venv
 __pycache__/
