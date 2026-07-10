@@ -1,0 +1,39 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Python
+.venv
+__pycache__/
+*.pyc
+
+# Claude Code
+.omc/
+.claude/skills/
+.claude/settings.local.json
+
+# 원본 이미지(고용량) — 최적화된 결과물(frontend/src/assets/food/*.webp)만 커밋한다
+frontend/src/assets/food-src/*.png
+frontend/src/assets/food-src/*.jpg
+frontend/src/assets/food-src/*.jpeg
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

@@ -1,0 +1,48 @@
+/*
+ * 디자인 토큰 (skills/frontend/SKILL.md 절대 규칙 1)
+ * 색·폰트·간격은 이 파일과 Tailwind config 의 토큰만 사용. 임의 hex 금지.
+ * 출처: design-system/ai-assessment-practice/MASTER.md (ui-ux-pro-max 스킬 생성)
+ * 구글 폰트 @import는 CSS 최상단 규칙이라 styles/globals.css 에 있음
+ */
+
+@theme {
+  --color-primary: #2563eb;
+  --color-on-primary: #ffffff;
+  --color-secondary: #3b82f6;
+  --color-accent: #ea580c;
+  --color-background: #f8fafc;
+  --color-foreground: #1e293b;
+  --color-card: #ffffff;
+  --color-muted: #e9eff8;
+  --color-muted-foreground: #64748b;
+  --color-border: #e2e8f0;
+  --color-destructive: #dc2626;
+  --color-ring: #2563eb;
+
+  --font-heading: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+  --font-body: 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+  /*
+   * 장식용 확장 팔레트. 브랜드 시맨틱 색(primary/accent 등)과는 별개로
+   * 게임 내 시각 구분(버스 색상)이나 배경 텍스처(하늘/나무결 그라디언트)에만 쓴다.
+   */
+  --color-chart-amber: #f59e0b;
+  --color-chart-green: #16a34a;
+  --color-chart-purple: #9333ea;
+  --color-chart-teal: #0d9488;
+
+  --color-sky-100: #dceeff;
+  --color-sky-50: #eef6ff;
+
+  --color-wood-100: #dfb076;
+  --color-wood-300: #c3894f;
+  --color-wood-500: #a56f3b;
+}
+
+:root {
+  font-family: var(--font-body);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+}
