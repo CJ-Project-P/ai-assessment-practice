@@ -1,53 +1,40 @@
-import { getCurrentUsername } from '@/lib/auth'
-import { readStorage, writeStorage } from '@/lib/storage'
+import { apiFetch } from '@/lib/api'
 
 export type PracticeRecord = {
   id: string
   gameId: string
-  username: string | null
   total: number
   correct: number
   createdAt: number
 }
 
-const STORAGE_KEY = 'ai-assessment-practice:practice-records'
-const STORAGE_VERSION = 1
+type PracticeRecordResponse = {
+  id: string
+  game_id: string
+  total: number
+  correct: number
+  created_at: string
+}
 
-function getAllRecords(): PracticeRecord[] {
-  return readStorage<PracticeRecord[]>(STORAGE_KEY, STORAGE_VERSION, [])
+function toPracticeRecord(r: PracticeRecordResponse): PracticeRecord {
+  return { id: r.id, gameId: r.game_id, total: r.total, correct: r.correct, createdAt: new Date(r.created_at).getTime() }
 }
 
 /** 실전 분량 모드를 한 판 마칠 때마다 호출해서 정확도 기록을 남긴다. */
-export function addPracticeRecord(gameId: string, total: number, correct: number): PracticeRecord {
-  const entry: PracticeRecord = {
-    id: crypto.randomUUID(),
-    gameId,
-    username: getCurrentUsername(),
-    total,
-    correct,
-    createdAt: Date.now(),
-  }
-  const records = getAllRecords()
-  records.unshift(entry)
-  writeStorage(STORAGE_KEY, STORAGE_VERSION, records)
-  return entry
-}
-
-/** 현재 로그인한 사용자(비로그인이면 null 사용자) 기준으로, 필요하면 게임별로 필터링해 기록을 가져온다. */
-export function getPracticeRecords(gameId?: string): PracticeRecord[] {
-  const username = getCurrentUsername()
-  return getAllRecords()
-    .filter((r) => r.username === username)
-    .filter((r) => !gameId || r.gameId === gameId)
-    .sort((a, b) => a.createdAt - b.createdAt)
-}
-
-export function clearPracticeRecords(gameId?: string) {
-  const username = getCurrentUsername()
-  const remaining = getAllRecords().filter((r) => {
-    if (r.username !== username) return true
-    if (gameId && r.gameId !== gameId) return true
-    return false
+export async function addPracticeRecord(gameId: string, total: number, correct: number): Promise<void> {
+  await apiFetch('/practice-records', {
+    method: 'POST',
+    body: JSON.stringify({ game_id: gameId, total, correct }),
   })
-  writeStorage(STORAGE_KEY, STORAGE_VERSION, remaining)
+}
+
+export async function getPracticeRecords(gameId?: string): Promise<PracticeRecord[]> {
+  const query = gameId ? `?game_id=${encodeURIComponent(gameId)}` : ''
+  const records = await apiFetch<PracticeRecordResponse[]>(`/practice-records${query}`)
+  return records.map(toPracticeRecord).sort((a, b) => a.createdAt - b.createdAt)
+}
+
+export async function clearPracticeRecords(gameId?: string): Promise<void> {
+  const query = gameId ? `?game_id=${encodeURIComponent(gameId)}` : ''
+  await apiFetch(`/practice-records${query}`, { method: 'DELETE' })
 }

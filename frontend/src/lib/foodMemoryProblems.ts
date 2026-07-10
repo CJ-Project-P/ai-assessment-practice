@@ -40,6 +40,11 @@ export const FOOD_ITEMS: FoodItem[] = Object.entries(foodModules)
   })
   .sort((a, b) => a.id.localeCompare(b.id))
 
+/** DB에는 음식 id만 저장하고, 화면에 그릴 때 이 함수로 현재 빌드의 이미지/이름을 다시 찾는다. */
+export function getFoodItemById(id: string): FoodItem | undefined {
+  return FOOD_ITEMS.find((item) => item.id === id)
+}
+
 const PERSON_NAMES = [
   '철수', '영희', '민수', '지훈', '수진', '유진', '하늘', '태우',
   '서연', '도윤', '예린', '준서', '가은', '시우', '나윤', '재현',

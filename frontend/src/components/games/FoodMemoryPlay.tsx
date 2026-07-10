@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils'
 import { GameExitButton, GameResultSummary, MistakeList } from '@/components/games/GameSessionUI'
 import {
   generateFoodProblem,
+  getFoodItemById,
   type FoodItem,
   type FoodMemoryProblem,
   type FoodTurn,
@@ -16,10 +17,10 @@ import { addWrongAnswer } from '@/lib/wrongAnswers'
 import { roundPair, type Mode } from '@/lib/gameRounds'
 import { ko } from '@/i18n'
 
+/** DB에는 음식 id만 저장한다 (턴 노출 데이터는 오답 카드에서 안 쓰여서 저장 안 함, 이미지 경로는 getFoodItemById로 다시 찾음). */
 export type FoodMistake = {
-  turns: FoodTurn[]
-  correctItem: FoodItem
-  selectedItem: FoodItem | null
+  correctItemId: string
+  selectedItemId: string | null
 }
 
 const TURN_MS = 1000
@@ -91,6 +92,9 @@ export function FoodMistakeCard({
   meta?: string
   onDelete?: () => void
 }) {
+  const correctItem = getFoodItemById(mistake.correctItemId)
+  const selectedItem = mistake.selectedItemId ? getFoodItemById(mistake.selectedItemId) : null
+
   return (
     <div className="flex flex-col gap-5 rounded-2xl border border-border bg-card p-6">
       <div className="flex items-center justify-between">
@@ -100,16 +104,14 @@ export function FoodMistakeCard({
       <div className="grid grid-cols-2 gap-3 text-center">
         <div className="flex flex-col items-center gap-2">
           <p className="text-sm font-semibold text-primary">{ko.common.answerLabel}</p>
-          <img src={mistake.correctItem.src} alt={mistake.correctItem.name} className="w-56 h-auto object-contain" />
+          {correctItem && (
+            <img src={correctItem.src} alt={correctItem.name} className="w-56 h-auto object-contain" />
+          )}
         </div>
         <div className="flex flex-col items-center gap-2">
           <p className="text-sm font-semibold text-destructive">{ko.common.myAnswerLabel}</p>
-          {mistake.selectedItem ? (
-            <img
-              src={mistake.selectedItem.src}
-              alt={mistake.selectedItem.name}
-              className="w-56 h-auto object-contain"
-            />
+          {selectedItem ? (
+            <img src={selectedItem.src} alt={selectedItem.name} className="w-56 h-auto object-contain" />
           ) : (
             <p className="mt-8 text-sm text-muted-foreground">{ko.common.timedOut}</p>
           )}
@@ -207,7 +209,7 @@ export function FoodMemoryPlay({ mode, round1Count: round1CountProp, round2Count
         goToNextQuestion(2)
       } else {
         if (mode === 'practice') {
-          addPracticeRecord('food-memory', newSolvedCount, newSolvedCount - mistakes.length)
+          addPracticeRecord('food-memory', newSolvedCount, newSolvedCount - mistakes.length).catch(console.error)
         }
         setFinished(true)
       }
@@ -224,9 +226,9 @@ export function FoodMemoryPlay({ mode, round1Count: round1CountProp, round2Count
 
     const correct = item?.id === problem.correctItem.id
     if (!correct) {
-      const mistake: FoodMistake = { turns: problem.turns, correctItem: problem.correctItem, selectedItem: item }
+      const mistake: FoodMistake = { correctItemId: problem.correctItem.id, selectedItemId: item?.id ?? null }
       setMistakes((prev) => [...prev, mistake])
-      addWrongAnswer('food-memory', mode, mistake)
+      addWrongAnswer('food-memory', mode, mistake).catch(console.error)
     }
 
     if (mode === 'practice') {

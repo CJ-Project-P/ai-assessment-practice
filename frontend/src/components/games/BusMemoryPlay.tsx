@@ -10,8 +10,8 @@ import { addWrongAnswer } from '@/lib/wrongAnswers'
 import { roundPair, type Mode } from '@/lib/gameRounds'
 import { ko } from '@/i18n'
 
+/** DB에는 정답/내 답안 숫자만 저장한다 (턴 노출 데이터는 오답 카드에서 안 쓰여서 저장 안 함). */
 export type BusMistake = {
-  turns: BusTurn[]
   correctNumber: number
   selectedNumber: number | null
 }
@@ -214,7 +214,7 @@ export function BusMemoryPlay({ mode, round1Count: round1CountProp, round2Count:
         goToNextQuestion(2)
       } else {
         if (mode === 'practice') {
-          addPracticeRecord('bus-memory', newSolvedCount, newSolvedCount - mistakes.length)
+          addPracticeRecord('bus-memory', newSolvedCount, newSolvedCount - mistakes.length).catch(console.error)
         }
         setFinished(true)
       }
@@ -231,9 +231,9 @@ export function BusMemoryPlay({ mode, round1Count: round1CountProp, round2Count:
 
     const correct = number === problem.correctNumber
     if (!correct) {
-      const mistake: BusMistake = { turns: problem.turns, correctNumber: problem.correctNumber, selectedNumber: number }
+      const mistake: BusMistake = { correctNumber: problem.correctNumber, selectedNumber: number }
       setBusMistakes((prev) => [...prev, mistake])
-      addWrongAnswer('bus-memory', mode, mistake)
+      addWrongAnswer('bus-memory', mode, mistake).catch(console.error)
     }
 
     if (mode === 'practice') {

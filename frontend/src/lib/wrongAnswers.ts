@@ -1,4 +1,4 @@
-import { readStorage, writeStorage } from '@/lib/storage'
+import { apiFetch } from '@/lib/api'
 
 export type WrongAnswerEntry<T = unknown> = {
   id: string
@@ -8,36 +8,36 @@ export type WrongAnswerEntry<T = unknown> = {
   createdAt: number
 }
 
-const STORAGE_KEY = 'ai-assessment-practice:wrong-answers'
-const STORAGE_VERSION = 1
-
-function getAllEntries(): WrongAnswerEntry[] {
-  return readStorage<WrongAnswerEntry[]>(STORAGE_KEY, STORAGE_VERSION, [])
+type WrongAnswerResponse<T> = {
+  id: string
+  game_id: string
+  mode: 'learn' | 'practice'
+  data: T
+  created_at: string
 }
 
-export function getWrongAnswers(gameId?: string): WrongAnswerEntry[] {
-  const all = getAllEntries()
-  return gameId ? all.filter((entry) => entry.gameId === gameId) : all
+function toEntry<T>(r: WrongAnswerResponse<T>): WrongAnswerEntry<T> {
+  return { id: r.id, gameId: r.game_id, mode: r.mode, data: r.data, createdAt: new Date(r.created_at).getTime() }
 }
 
-export function addWrongAnswer<T>(gameId: string, mode: 'learn' | 'practice', data: T): WrongAnswerEntry<T> {
-  const full: WrongAnswerEntry<T> = { id: crypto.randomUUID(), gameId, mode, data, createdAt: Date.now() }
-  const all = getAllEntries()
-  all.unshift(full as WrongAnswerEntry)
-  writeStorage(STORAGE_KEY, STORAGE_VERSION, all)
-  return full
+export async function getWrongAnswers(gameId?: string): Promise<WrongAnswerEntry[]> {
+  const query = gameId ? `?game_id=${encodeURIComponent(gameId)}` : ''
+  const entries = await apiFetch<WrongAnswerResponse<unknown>[]>(`/wrong-answers${query}`)
+  return entries.map(toEntry)
 }
 
-export function deleteWrongAnswer(id: string) {
-  const all = getAllEntries().filter((entry) => entry.id !== id)
-  writeStorage(STORAGE_KEY, STORAGE_VERSION, all)
+export async function addWrongAnswer<T>(gameId: string, mode: 'learn' | 'practice', data: T): Promise<void> {
+  await apiFetch('/wrong-answers', {
+    method: 'POST',
+    body: JSON.stringify({ game_id: gameId, mode, data }),
+  })
 }
 
-export function clearWrongAnswers(gameId?: string) {
-  if (!gameId) {
-    writeStorage(STORAGE_KEY, STORAGE_VERSION, [])
-    return
-  }
-  const remaining = getAllEntries().filter((entry) => entry.gameId !== gameId)
-  writeStorage(STORAGE_KEY, STORAGE_VERSION, remaining)
+export async function deleteWrongAnswer(id: string): Promise<void> {
+  await apiFetch(`/wrong-answers/${id}`, { method: 'DELETE' })
+}
+
+export async function clearWrongAnswers(gameId?: string): Promise<void> {
+  const query = gameId ? `?game_id=${encodeURIComponent(gameId)}` : ''
+  await apiFetch(`/wrong-answers${query}`, { method: 'DELETE' })
 }

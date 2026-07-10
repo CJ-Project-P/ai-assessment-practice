@@ -77,7 +77,13 @@ export default function WrongAnswers() {
   const [entries, setEntries] = useState<WrongAnswerEntry[]>([])
 
   useEffect(() => {
-    setEntries(getWrongAnswers(selectedGameId ?? undefined))
+    let cancelled = false
+    getWrongAnswers(selectedGameId ?? undefined).then((entries) => {
+      if (!cancelled) setEntries(entries)
+    })
+    return () => {
+      cancelled = true
+    }
   }, [selectedGameId])
 
   function handleSelectGame(gameId: string | null) {
@@ -89,12 +95,12 @@ export default function WrongAnswers() {
   }
 
   function handleDelete(id: string) {
-    deleteWrongAnswer(id)
+    deleteWrongAnswer(id).catch(console.error)
     setEntries((prev) => prev.filter((entry) => entry.id !== id))
   }
 
   function handleClearAll() {
-    clearWrongAnswers(selectedGameId ?? undefined)
+    clearWrongAnswers(selectedGameId ?? undefined).catch(console.error)
     setEntries([])
   }
 
