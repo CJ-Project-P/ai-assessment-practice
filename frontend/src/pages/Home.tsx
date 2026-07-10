@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ChartBar, ClockCountdown, ListChecks } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/Button'
 import { PageContainer } from '@/components/ui/PageContainer'
-import { getCurrentUsername, logOut } from '@/lib/auth'
+import { logOut, onAuthStateChange, type AuthUser } from '@/lib/auth'
 import { ko } from '@/i18n'
 
 const featureIcons = [ClockCountdown, ListChecks, ChartBar]
@@ -11,19 +11,22 @@ const features = ko.home.features.map((feature, i) => ({ ...feature, icon: featu
 
 export default function Home() {
   const navigate = useNavigate()
-  const [username, setUsername] = useState(() => getCurrentUsername())
+  const [user, setUser] = useState<AuthUser | null>(null)
 
-  function handleLogout() {
-    logOut()
-    setUsername(null)
+  useEffect(() => {
+    return onAuthStateChange(setUser)
+  }, [])
+
+  async function handleLogout() {
+    await logOut()
   }
 
   return (
     <div className="relative flex min-h-dvh flex-col items-center justify-center gap-14 bg-background px-8 py-20 text-center">
       <div className="absolute right-8 top-8 flex items-center gap-4 text-base">
-        {username ? (
+        {user ? (
           <>
-            <span className="text-muted-foreground">{ko.home.greeting(username)}</span>
+            <span className="text-muted-foreground">{ko.home.greeting(user.email)}</span>
             <button type="button" onClick={handleLogout} className="cursor-pointer text-primary hover:underline">
               {ko.home.logout}
             </button>

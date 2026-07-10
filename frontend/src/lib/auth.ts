@@ -1,53 +1,57 @@
-/**
- * 백엔드가 아직 없어서 프론트에서만 도는 임시 로그인 스텁이다.
- * localStorage에 아이디/비밀번호를 평문으로 저장하므로 실제 인증으로 취급하면 안 되고,
- * 나중에 서버 API(회원가입/로그인/세션)로 반드시 교체해야 한다.
- */
-import { readStorage, writeStorage } from '@/lib/storage'
+import { supabase } from '@/lib/supabaseClient'
 import { ko } from '@/i18n'
 
-export type StoredUser = { username: string; password: string }
-
-const USERS_KEY = 'ai-assessment-practice:users'
-const USERS_VERSION = 1
-const SESSION_KEY = 'ai-assessment-practice:current-user'
-
-function getUsers(): StoredUser[] {
-  return readStorage<StoredUser[]>(USERS_KEY, USERS_VERSION, [])
+export type AuthUser = {
+  id: string
+  email: string
 }
 
-function saveUsers(users: StoredUser[]) {
-  writeStorage(USERS_KEY, USERS_VERSION, users)
+const ERROR_MESSAGES: Record<string, string> = {
+  'Invalid login credentials': ko.auth.invalidCredentials,
+  'User already registered': ko.auth.emailTaken,
+  'Email not confirmed': ko.auth.emailNotConfirmed,
+  'Password should be at least 6 characters.': ko.auth.passwordTooShort,
 }
 
-export function getCurrentUsername(): string | null {
-  return localStorage.getItem(SESSION_KEY)
+function translateError(message: string): string {
+  return ERROR_MESSAGES[message] ?? message
 }
 
-export function signUp(username: string, password: string): { ok: true } | { ok: false; error: string } {
-  const trimmed = username.trim()
-  if (!trimmed || !password) return { ok: false, error: ko.auth.missingFields }
-  const users = getUsers()
-  if (users.some((u) => u.username === trimmed)) {
-    return { ok: false, error: ko.auth.usernameTaken }
-  }
-  users.push({ username: trimmed, password })
-  saveUsers(users)
-  localStorage.setItem(SESSION_KEY, trimmed)
+function toAuthUser(user: { id: string; email?: string | null } | null | undefined): AuthUser | null {
+  if (!user || !user.email) return null
+  return { id: user.id, email: user.email }
+}
+
+export async function getCurrentUser(): Promise<AuthUser | null> {
+  const { data } = await supabase.auth.getUser()
+  return toAuthUser(data.user)
+}
+
+/** 로그인 상태가 바뀔 때마다 callback을 호출한다. 구독 해제 함수를 반환한다. */
+export function onAuthStateChange(callback: (user: AuthUser | null) => void): () => void {
+  const {
+    data: { subscription },
+  } = supabase.auth.onAuthStateChange((_event, session) => {
+    callback(toAuthUser(session?.user))
+  })
+  return () => subscription.unsubscribe()
+}
+
+export async function signUp(
+  email: string,
+  password: string,
+): Promise<{ ok: true; needsEmailConfirmation: boolean } | { ok: false; error: string }> {
+  const { data, error } = await supabase.auth.signUp({ email, password })
+  if (error) return { ok: false, error: translateError(error.message) }
+  return { ok: true, needsEmailConfirmation: !data.session }
+}
+
+export async function logIn(email: string, password: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const { error } = await supabase.auth.signInWithPassword({ email, password })
+  if (error) return { ok: false, error: translateError(error.message) }
   return { ok: true }
 }
 
-export function logIn(username: string, password: string): { ok: true } | { ok: false; error: string } {
-  const trimmed = username.trim()
-  const users = getUsers()
-  const user = users.find((u) => u.username === trimmed)
-  if (!user || user.password !== password) {
-    return { ok: false, error: ko.auth.invalidCredentials }
-  }
-  localStorage.setItem(SESSION_KEY, trimmed)
-  return { ok: true }
-}
-
-export function logOut() {
-  localStorage.removeItem(SESSION_KEY)
+export async function logOut(): Promise<void> {
+  await supabase.auth.signOut()
 }
